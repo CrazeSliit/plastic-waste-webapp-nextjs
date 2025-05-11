@@ -208,23 +208,87 @@ export async function GET() {
           break;
       }
 
-      // Format recent activity
-      dashboardData.recentActivity = [
-        ...(collections?.map(c => ({
-          type: 'collection',
-          title: `Collection ${(c.status || 'scheduled').toLowerCase()}`,
-          description: `${c.wasteType || 'Mixed Waste'} - ${c.quantity || 0}kg`,
-          date: c.date ? new Date(c.date).toISOString() : new Date().toISOString()
-        })) || []),
-        ...(orders?.map(o => ({
-          type: 'order',
-          title: `Order ${(o.status || 'placed').toLowerCase()}`,
-          description: `Order #${o.id}`,
-          date: o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString()
-        })) || [])
-      ]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5);
+      // Format recent activity based on user type
+      let recentActivityItems = [];
+      
+      // Add collections to recent activity
+      if (collections && collections.length > 0) {
+        recentActivityItems.push(
+          ...collections.map(c => ({
+            type: 'collection',
+            title: `Collection ${(c.status || 'scheduled').toLowerCase()}`,
+            description: `${c.wasteType || 'Mixed Waste'} - ${c.quantity || 0}kg`,
+            date: c.date ? new Date(c.date).toISOString() : new Date().toISOString(),
+            status: c.status
+          }))
+        );
+      }
+      
+      // Add orders to recent activity with more details
+      if (orders && orders.length > 0) {
+        // For business users, include more order details
+        if (userType === 'BUSINESS') {
+          recentActivityItems.push(
+            ...orders.map(o => {
+              let statusDescription = '';
+              
+              // Create descriptive status message based on order status
+              switch(o.status) {
+                case 'PENDING':
+                  statusDescription = 'Waiting for collector approval';
+                  break;
+                case 'ACCEPTED':
+                  statusDescription = 'Order accepted by collector';
+                  break;
+                case 'PAID':
+                  statusDescription = 'Payment received';
+                  break;
+                case 'DELIVERED':
+                  statusDescription = 'Materials delivered';
+                  break;
+                case 'COMPLETED':
+                  statusDescription = 'Order fulfilled successfully';
+                  break;
+                case 'CANCELLED':
+                  statusDescription = 'Order was cancelled';
+                  break;
+                default:
+                  statusDescription = 'Order placed';
+              }
+              
+              return {
+                type: 'order',
+                title: `Order ${(o.status || 'placed').toLowerCase()}`,
+                description: o.listing ? 
+                  `${o.listing.title || 'Waste Collection'} - ${statusDescription}` : 
+                  `Order #${o.id} - ${statusDescription}`,
+                date: o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString(),
+                status: o.status,
+                orderId: o.id
+              };
+            })
+          );
+        } else {
+          // For other user types, use simpler format
+          recentActivityItems.push(
+            ...orders.map(o => ({
+              type: 'order',
+              title: `Order ${(o.status || 'placed').toLowerCase()}`,
+              description: o.listing ? 
+                `${o.listing.title || 'Waste Collection'}` : 
+                `Order #${o.id}`,
+              date: o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString(),
+              status: o.status,
+              orderId: o.id
+            }))
+          );
+        }
+      }
+      
+      // Sort by date (newest first) and limit to 5 items
+      dashboardData.recentActivity = recentActivityItems
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
 
       return NextResponse.json({
         success: true,

@@ -266,14 +266,49 @@ export default function Dashboard() {
             <div className="space-y-4">
               {dashboardData.recentActivity.map((activity, index) => (
                 <div key={index} className="flex items-center gap-4">
+                  {/* Activity type indicator */}
                   <div className={`w-2 h-2 rounded-full ${
-                    activity.type === 'collection' ? 'bg-green-500' : 'bg-blue-500'
+                    activity.type === 'collection' ? 'bg-green-500' : 
+                    activity.status === 'PENDING' ? 'bg-yellow-500' :
+                    activity.status === 'ACCEPTED' ? 'bg-blue-500' :
+                    activity.status === 'PAID' ? 'bg-purple-500' :
+                    activity.status === 'DELIVERED' ? 'bg-indigo-500' :
+                    activity.status === 'COMPLETED' ? 'bg-green-600' :
+                    activity.status === 'CANCELLED' ? 'bg-red-500' :
+                    'bg-blue-500'
                   }`} />
+                  
+                  {/* Activity details */}
                   <div className="flex-1">
-                    <p className="font-medium">{activity.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{activity.title}</p>
+                      {activity.type === 'order' && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          activity.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                          activity.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-800' :
+                          activity.status === 'PAID' ? 'bg-purple-100 text-purple-800' :
+                          activity.status === 'DELIVERED' ? 'bg-indigo-100 text-indigo-800' :
+                          activity.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                          activity.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {activity.status}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">{activity.description}</p>
+                    {activity.type === 'order' && session?.user?.userType === 'business' && (
+                      <Link 
+                        href={`/orders/${activity.orderId}`} 
+                        className="text-xs text-primary hover:underline mt-1 inline-block"
+                      >
+                        View Order Details
+                      </Link>
+                    )}
                   </div>
-                  <time className="text-sm text-muted-foreground">
+                  
+                  {/* Activity date */}
+                  <time className="text-sm text-muted-foreground whitespace-nowrap">
                     {new Date(activity.date).toLocaleDateString()}
                   </time>
                 </div>
