@@ -211,6 +211,50 @@ export default function CollectorDashboard() {
     setStatusFilter(value);
   };
   
+  // Handle order status update
+  const handleOrderStatusUpdate = async (orderId, newStatus) => {
+    try {
+      // Show loading toast
+      toast({
+        title: "Updating order status",
+        description: "Please wait...",
+      });
+      
+      // Call the API to update the order status
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update order status');
+      }
+      
+      // Show success toast
+      toast({
+        title: "Status updated",
+        description: `Order status has been updated to ${newStatus}`,
+        variant: "success"
+      });
+      
+      // Refresh orders to show the updated status
+      fetchOrders();
+      
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: "Error",
+        description: error.message || 'An error occurred while updating the order status',
+        variant: "destructive"
+      });
+    }
+  };
+  
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
@@ -528,10 +572,46 @@ export default function CollectorDashboard() {
                                         View details
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
+                                      <DropdownMenuLabel>Update Status</DropdownMenuLabel>
+                                      {order.status !== 'PENDING' && (
+                                        <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'PENDING')}>
+                                          <Clock className="h-4 w-4 mr-2 text-yellow-500" />
+                                          Set as Pending
+                                        </DropdownMenuItem>
+                                      )}
+                                      {order.status !== 'ACCEPTED' && (
+                                        <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'ACCEPTED')}>
+                                          <CircleCheck className="h-4 w-4 mr-2 text-blue-500" />
+                                          Accept Order
+                                        </DropdownMenuItem>
+                                      )}
+                                      {order.status !== 'PAID' && (
+                                        <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'PAID')}>
+                                          <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                                          Mark as Paid
+                                        </DropdownMenuItem>
+                                      )}
+                                      {order.status !== 'DELIVERED' && (
+                                        <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'DELIVERED')}>
+                                          <Truck className="h-4 w-4 mr-2 text-purple-500" />
+                                          Mark as Delivered
+                                        </DropdownMenuItem>
+                                      )}
+                                      {order.status !== 'COMPLETED' && (
+                                        <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'COMPLETED')}>
+                                          <CircleCheck className="h-4 w-4 mr-2 text-green-600" />
+                                          Complete Order
+                                        </DropdownMenuItem>
+                                      )}
+                                      {order.status !== 'CANCELLED' && (
+                                        <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'CANCELLED')}>
+                                          <CircleX className="h-4 w-4 mr-2 text-red-500" />
+                                          Cancel Order
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuSeparator />
                                       <DropdownMenuItem>
-                                        Update status
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem>
+                                        <Phone className="h-4 w-4 mr-2" />
                                         Contact buyer
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
