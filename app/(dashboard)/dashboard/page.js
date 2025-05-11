@@ -209,18 +209,20 @@ export default function Dashboard() {
           </Card>
 
           {/* Reward Points Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Reward Points</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{dashboardData.points} pts</p>
-              <p className="text-sm text-muted-foreground">Your current balance</p>
-              <Link href="/rewards" className="text-primary hover:underline mt-4 inline-block">
-                View Rewards <ChevronRight className="inline h-4 w-4" />
-              </Link>
-            </CardContent>
-          </Card>
+          {session?.user?.userType !== 'BUSINESS' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Reward Points</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{dashboardData.points} pts</p>
+                <p className="text-sm text-muted-foreground">Your current balance</p>
+                <Link href="/rewards" className="text-primary hover:underline mt-4 inline-block">
+                  View Rewards <ChevronRight className="inline h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Impact Card */}
           <Card>

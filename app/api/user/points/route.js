@@ -11,6 +11,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Return error for business users
+    if (session.user.userType === 'BUSINESS') {
+      return NextResponse.json(
+        { error: "Points system not available for business accounts" },
+        { status: 403 }
+      );
+    }
+
     const db = await getDb();
     const user = await db.collection("User").findOne({
       _id: new ObjectId(session.user.id)

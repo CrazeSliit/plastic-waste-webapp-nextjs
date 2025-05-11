@@ -8,17 +8,27 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Award, Gift, ArrowRight, Leaf } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function RewardsPage() {
   const [loading, setLoading] = useState(true);
   const [userPoints, setUserPoints] = useState(0);
   const [rewards, setRewards] = useState([]);
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
+    // Redirect business users away from rewards page
+    if (session?.user?.userType === 'BUSINESS') {
+      router.push('/dashboard');
+      return;
+    }
+
     fetchUserPoints();
     fetchAvailableRewards();
-  }, []);
+  }, [session]);
 
   const fetchUserPoints = async () => {
     try {

@@ -82,12 +82,26 @@ export function SimpleHeader() {
 
   const fetchUserPoints = async () => {
     try {
+      // Skip fetching points for business users
+      if (userData?.userType === 'BUSINESS') {
+        setPointsCount(0);
+        return;
+      }
+
       const response = await fetch('/api/user/points');
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      setPointsCount(data.points);
+      
+      // Only set points if the request was successful and user is not a business
+      if (response.ok && data.points !== undefined) {
+        setPointsCount(data.points);
+      } else {
+        // Silently handle any errors by setting points to 0
+        setPointsCount(0);
+      }
     } catch (error) {
+      // Silently handle any errors by setting points to 0
       console.error('Error fetching points:', error);
+      setPointsCount(0);
     }
   };
 
@@ -201,15 +215,17 @@ export function SimpleHeader() {
             {isAuthenticated ? (
               <>
                 {/* Points Display */}
-                <Link href="/rewards">
-                  <motion.div 
-                    className="hidden sm:flex items-center rounded-full bg-green-50 px-3 py-1 border border-green-100"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <Award className="h-4 w-4 text-green-600 mr-1" />
-                    <span className="text-sm font-medium text-green-800">{pointsCount} pts</span>
-                  </motion.div>
-                </Link>
+                {userData?.userType !== 'BUSINESS' && (
+                  <Link href="/rewards">
+                    <motion.div 
+                      className="hidden sm:flex items-center rounded-full bg-green-50 px-3 py-1 border border-green-100"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <Award className="h-4 w-4 text-green-600 mr-1" />
+                      <span className="text-sm font-medium text-green-800">{pointsCount} pts</span>
+                    </motion.div>
+                  </Link>
+                )}
 
                 {/* Shopping Cart - Updated with Link */}
                 <Link href="/marketplace/cart">
@@ -319,10 +335,12 @@ export function SimpleHeader() {
                     </Avatar>
                     <div>
                       <p className="font-medium">{userData?.name || "User"}</p>
-                      <Link href="/rewards" className="flex items-center text-green-700 text-sm">
-                        <Award className="h-3 w-3 mr-1" />
-                        <span>{pointsCount} points</span>
-                      </Link>
+                      {userData?.userType !== 'BUSINESS' && (
+                        <Link href="/rewards" className="flex items-center text-green-700 text-sm">
+                          <Award className="h-3 w-3 mr-1" />
+                          <span>{pointsCount} points</span>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 )}
