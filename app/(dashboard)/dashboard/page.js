@@ -78,6 +78,12 @@ export default function Dashboard() {
     0
   );
 
+  // Calculate total order weight for business users
+  const totalOrderWeight = dashboardData.orders.reduce(
+    (sum, order) => sum + (parseFloat(order.quantity) || 0),
+    0
+  );
+
   const getStatsCards = () => {
     if (!session?.user?.userType) return [];
 
@@ -230,8 +236,17 @@ export default function Dashboard() {
               <CardTitle>Impact</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{totalRecycled.toFixed(1)} kg</p>
-              <p className="text-sm text-muted-foreground">plastic recycled</p>
+              {session?.user?.userType === 'BUSINESS' ? (
+                <>
+                  <p className="text-3xl font-bold">{totalOrderWeight.toFixed(1)} kg</p>
+                  <p className="text-sm text-muted-foreground">total plastic waste ordered</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold">{totalRecycled.toFixed(1)} kg</p>
+                  <p className="text-sm text-muted-foreground">plastic recycled</p>
+                </>
+              )}
               <Link href="/impact" className="text-primary hover:underline mt-4 inline-block">
                 View Impact <ChevronRight className="inline h-4 w-4" />
               </Link>

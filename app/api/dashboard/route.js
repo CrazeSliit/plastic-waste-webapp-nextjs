@@ -108,13 +108,22 @@ export async function GET() {
           const businessOrders = await prisma.order.findMany({
             where: { buyerId: userId },
             select: {
-              totalPrice: true
+              totalPrice: true,
+              quantity: true,
+              status: true,
+              createdAt: true,
+              listing: {
+                select: {
+                  title: true,
+                  wasteType: true
+                }
+              }
             }
           });
           
           dashboardData = {
             ...dashboardData,
-            orders: orders || [],
+            orders: businessOrders || [],
             totalOrders: businessOrders?.length || 0,
             totalSpent: businessOrders?.reduce((sum, order) => 
               sum + (parseFloat(order.totalPrice) || 0), 0) || 0
