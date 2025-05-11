@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { calculatePoints, distributePoints } from "@/lib/points";
 
 export async function GET() {
   try {
@@ -193,12 +194,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid listing ID format" }, { status: 400 });
     }
     
-    // Log all listings for debugging
-    const allListings = await prisma.listing.findMany({
-      select: { id: true, title: true, userId: true }
-    });
-    console.log(`🔍 Available listings: ${JSON.stringify(allListings.map(l => ({ id: l.id, title: l.title })))}`);
-    
     // Validate the listing exists
     const listing = await prisma.listing.findUnique({
       where: { id: listingId },
@@ -216,30 +211,43 @@ export async function POST(request) {
     const order = await prisma.order.create({
       data: {
         buyerId: session.user.id,
-        listingId: listingId,
-        quantity: data.quantity,
-        totalPrice: data.totalPrice,
-        status: "PENDING",
+        listingId: listing.id,
+        quantity: parseFloat(data.quantity) || 0,
+        totalPrice: parseFloat(data.totalPrice) || 0,
+        status: "PENDING"
       },
       include: {
-        buyer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            userType: true
-          }
-        },
         listing: {
           select: {
-            id: true,
             title: true,
             userId: true
+          }
+        },
+        buyer: {
+          select: {
+            name: true,
+            userType: true
           }
         }
       }
     });
-    
+
+    // If the buyer is a business user, calculate and distribute points
+    if (session.user.userType === 'BUSINESS') {
+      try {
+        console.log('🎯 Business order detected - calculating points');
+        const points = calculatePoints(order.quantity);
+        
+        if (points > 0) {
+          console.log(`💫 Distributing ${points} points to individual users`);
+          await distributePoints(prisma, points);
+        }
+      } catch (error) {
+        console.error('Error handling points distribution:', error);
+        // Don't fail the order creation if points distribution fails
+      }
+    }
+
     console.log(`✅ Order created successfully: ${order.id}`);
     console.log(`👤 Buyer: ${order.buyer.name} (${order.buyer.userType})`);
     console.log(`📦 Listing: ${order.listing.title} owned by ${order.listing.userId}`);
